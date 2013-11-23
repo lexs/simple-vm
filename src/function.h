@@ -3,6 +3,8 @@
 
 #include "instr.h"
 
+class Value;
+
 class Function {
 public:
     Function(std::size_t _reg_count, Value* _constants, instr_t* _instructions)

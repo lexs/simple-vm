@@ -3,7 +3,7 @@ RM=rm -f
 
 CPPFLAGS = -g -Wall -std=c++11
 
-SRCS=vm.cpp main.cpp value.cpp
+SRCS=vm.cpp main.cpp value.cpp builder.cpp
 OBJS=$(subst .cpp,.o,$(SRCS))
 
 all: vm
@@ -11,7 +11,7 @@ all: vm
 vm: $(OBJS)
 	$(CXX) $(CPPFLAGS) -o vm $(OBJS)
 
-vm.o: instr.h value.h vm.h $(SRCS)
+vm.o: instr.h value.h vm.h builder.h $(SRCS)
 
 clean:
 	$(RM) $(OBJS)

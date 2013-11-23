@@ -1,5 +1,6 @@
 #include "op_codes.h"
 #include "vm.h"
+#include "builder.h"
 
 int main() {
     /*
@@ -37,20 +38,26 @@ int main() {
 
     */
 
+    FunctionBuilder builder;
 
-    int r_n = r(0);
-    int r_fib = r(1);
-    int r_n1 = r(2);
-    int r_n2 = r(3);
+    Register r_n = builder.create_register();
+    Register r_fib = builder.create_register();
+    Register r_n1 = builder.create_register();
+    Register r_n2 = builder.create_register();
+
+    Constant k_fib = builder.self();
+    Constant k_1 = builder.create_constant(Value::number(1));
+    Constant k_2 = builder.create_constant(Value::number(2));
+
     instr_t i_fib[] = {
-        loadk(r_fib, k(0)),
-        lt(r_n, k(2)),          // if n < 2
+        loadk(r_fib, k_fib),
+        lt(r_n, k_2),           // if n < 2
         jump(5),                // jump to ret
 
-        sub(r_n1, r_n, k(1)),   // n1 = n - 1
+        sub(r_n1, r_n, k_1),    // n1 = n - 1
         call(r_fib, r_n1, 1),   // n1 = fib(n1)
 
-        sub(r_n2, r_n, k(2)),   // n2 = n - 2
+        sub(r_n2, r_n, k_2),    // n2 = n - 2
         call(r_fib, r_n2, 1),   // n2 = fib(n2)
 
         add(r_n, r_n1, r_n2),   // n = n1 + n2
@@ -58,17 +65,10 @@ int main() {
         ret(r_n, 1)             // return n
     };
 
-    Value c_fib[] = {
-        Value(),            // k(0), placeholder for function
-        Value::number(1),   // k(1)
-        Value::number(2),   // k(2)
-    };
-
-    Function fib_recur(4, c_fib, i_fib);
-    c_fib[0] = Value::function(&fib_recur);
+    Function* fib_recur = builder.build(i_fib);
 
     Value c_print[] = {
-        Value::function(&fib_recur)
+        Value::function(fib_recur)
     };
 
     instr_t i_print[] = {
