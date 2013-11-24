@@ -62,7 +62,7 @@ struct first {
 
 template <class T>
 constexpr bool is_move_or_copy_constructible() {
-    return std::is_copy_constructible<T>() || std::is_move_constructible<T>();
+    return std::is_nothrow_copy_constructible<T>() || std::is_nothrow_move_constructible<T>();
 }
 
 }
