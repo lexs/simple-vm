@@ -14,61 +14,58 @@ class Function;
 
 using number_t = double;
 
-class Value {
+class Value : private Variant<std::nullptr_t, bool, number_t, void*> {
 public:
     static Value none() { return Value(); }
-    static Value boolean(bool value) { return Value(value); }
-    static Value number(number_t value) { return Value(value); }
-    static Value function(Function* function) { return Value(function); }
+    static Value boolean(bool value) { return Value(Type::BOOL, value); }
+    static Value number(number_t value) { return Value(Type::NUMBER, value); }
+    static Value function(Function* function) { return Value(Type::FUNCTION, function); }
 
-    Value() {}
+    Value() : type(Type::NONE) {}
 
     Value operator+(const Value& rhs) const {
-        assert(type() == Type::NUMBER && rhs.type() == Type::NUMBER);
-        return Value::number(value.get<number_t>() + rhs.value.get<number_t>());
+        assert(type == Type::NUMBER && rhs.type == Type::NUMBER);
+        return Value::number(get<number_t>() + rhs.get<number_t>());
     }
     Value operator-(const Value& rhs) const {
-        assert(type() == Type::NUMBER && rhs.type() == Type::NUMBER);
-        return Value::number(value.get<number_t>() - rhs.value.get<number_t>());
+        assert(type == Type::NUMBER && rhs.type == Type::NUMBER);
+        return Value::number(get<number_t>() - rhs.get<number_t>());
     }
     Value operator*(const Value& rhs) const { return Value(); }
     Value operator/(const Value& rhs) const { return Value(); }
 
     bool operator==(const Value& rhs) const {
         // TODO: Support bool
-        assert(type() == Type::NUMBER && rhs.type() == Type::NUMBER);
-        return value.get<number_t>() == rhs.value.get<number_t>();
+        assert(type == Type::NUMBER && rhs.type == Type::NUMBER);
+        return get<number_t>() == rhs.get<number_t>();
     }
     bool operator<(const Value& rhs) const {
-        assert(type() == Type::NUMBER && rhs.type() == Type::NUMBER);
-        return value.get<number_t>() < rhs.value.get<number_t>();
+        assert(type == Type::NUMBER && rhs.type == Type::NUMBER);
+        return get<number_t>() < rhs.get<number_t>();
     }
     bool operator<=(const Value& rhs) const {
-        assert(type() == Type::NUMBER && rhs.type() == Type::NUMBER);
-        return value.get<number_t>() < rhs.value.get<number_t>();
+        assert(type == Type::NUMBER && rhs.type == Type::NUMBER);
+        return get<number_t>() < rhs.get<number_t>();
     }
 
     operator Function*() {
-        assert(type() == Type::FUNCTION);
-        return static_cast<Function*>(value.get<void*>());
+        assert(type == Type::FUNCTION);
+        return static_cast<Function*>(get<void*>());
     }
 private:
     friend std::ostream& operator<<(std::ostream& os, const Value& value);
+
+    using Variant::get;
 
     enum class Type : char {
         NONE,
         BOOL,
         NUMBER,
         FUNCTION,
-    };
-
-
-    Variant<std::nullptr_t, bool, number_t, void*> value;
+    } type;
 
     template <typename T>
-    Value(T value) : value(value) {}
-
-    Type type() const { return static_cast<Type>(value.which_type()); }
+    Value(Type type, T value) : Variant(value), type(type) {}
 };
 
 #endif
