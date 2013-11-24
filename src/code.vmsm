@@ -1,0 +1,21 @@
+.entry fib
+
+.function fib args=1 registers=3
+    .constant function fib
+    .constant number 1
+    .constant number 2
+
+    loadk r3, k0
+    lt r0 k2        // if n < 2
+    jump end        // jump to end
+
+    sub r1, r0 k1   // n1 = n - 1
+    call r3 r1 1    // n1 = fib(n1)
+
+    sub r2 r0 k2    // n2 = n - 2
+    call r3 r2 1    // n2 = fib(n2)
+
+    add r0 r1 r2    // n = n1 + n2
+
+end:
+    ret r0 1        // return n
