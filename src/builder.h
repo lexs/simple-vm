@@ -23,7 +23,7 @@ public:
 private:
     int self_ref = -1;
 
-    std::size_t register_count;
+    std::size_t register_count = 0;
     std::vector<Value> constants;
 
     std::unique_ptr<Function> function;
