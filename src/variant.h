@@ -81,7 +81,8 @@ public:
         return reinterpret_cast<T&>(storage);
     }
 
-    template <typename Visitor, typename R = typename std::result_of<Visitor(First&)>::type> R visit(Visitor&& visitor) const {
+    template <typename Visitor> auto visit(Visitor&& visitor) const -> decltype(visitor(get<First>())) {
+        using R = decltype(visit(visitor));
         static_assert(mpl::all_of(std::is_same<typename std::result_of<Visitor(Types&)>::type, R>()...),
             "all visits must return the same type");
         typedef R (*Callback)(const Variant& variant, Visitor& visitor);
