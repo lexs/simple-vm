@@ -35,12 +35,6 @@ public:
 
     template <typename T,
         typename = typename std::enable_if<!std::is_same<Variant, typename std::remove_reference<T>::type>::value>::type>
-    Variant(T& value) {
-        Initializer<0, Types...>::initialize(*this, std::forward<T>(value));
-    }
-
-    template <typename T,
-        typename = typename std::enable_if<!std::is_same<Variant, typename std::remove_reference<T>::type>::value>::type>
     Variant(T&& value) {
         Initializer<0, Types...>::initialize(*this, std::forward<T>(value));
     }
@@ -49,9 +43,8 @@ public:
         variant.visit(Constructor(*this, variant));
     }
 
-    Variant(Variant&& variant) : which(variant.which), storage(std::move(variant.storage)) {
-        // Destroy old copy
-        variant.which = -1;
+    Variant(Variant&& variant) {
+        variant.visit(MoveConstructor(*this, variant));
     }
 
     ~Variant() {
@@ -61,6 +54,14 @@ public:
     Variant& operator=(const Variant& variant) {
         if (this != &variant) {
             variant.visit(Assigner(*this, variant));
+        }
+
+        return *this;
+    }
+
+    Variant& operator=(Variant&& variant) {
+        if (this != &variant) {
+            variant.visit(MoveAssigner(*this, variant));
         }
 
         return *this;
@@ -147,8 +148,8 @@ private:
     struct MoveConstructor {
         MoveConstructor(Variant& self, const Variant& other) : self(self), other(other) {}
 
-        template <typename T> void operator()(const T& value) const {
-            self.construct(other.which, value);
+        template <typename T> void operator()(T& value) const {
+            self.construct(other.which, std::move(value));
         }
     private:
         Variant& self;
@@ -164,6 +165,22 @@ private:
             } else {
                 self.destroy();
                 self.construct(other.which, value);
+            }
+        }
+    private:
+        Variant& self;
+        const Variant& other;
+    };
+
+    struct MoveAssigner {
+        MoveAssigner(Variant& self, const Variant& other) : self(self), other(other) {}
+
+        template <typename T> void operator()(T& value) const {
+            if (self.which == other.which) {
+                self.get<typename std::remove_const<T>::type>() = std::move(value);
+            } else {
+                self.destroy();
+                self.construct(other.which, std::move(value));
             }
         }
     private:
