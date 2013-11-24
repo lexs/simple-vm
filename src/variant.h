@@ -2,6 +2,7 @@
 #define VARIANT_H
 
 #include <cstdint>
+#include <cassert>
 
 #include <new>
 #include <type_traits>
@@ -34,12 +35,12 @@ public:
 
     Variant() {
         using First = typename mpl::first<Types...>::value;
-        construct(0, std::forward(First()));
+        construct(0, First());
     }
 
     template <typename T,
         typename = typename std::enable_if<!std::is_same<Variant, typename std::remove_reference<T>::type>::value>::type>
-    Variant(T&& value) {
+    Variant(T& value) {
         Initializer<0, Types...>::initialize(*this, std::forward<T>(value));
     }
 
@@ -64,6 +65,10 @@ public:
         return *this;
     }
 
+    int which_type() const {
+        return which;
+    }
+
     template <typename T> const T& get() const {
         static_assert(mpl::contains<T, Types...>(), "Type is not part of variant");
         return reinterpret_cast<const T&>(storage);
@@ -81,6 +86,7 @@ public:
             &caller<Types, Variant, Visitor>...
         };
 
+        assert(which >= 0 && which < COUNT);
         callers[which](*this, visitor);
     }
 
@@ -91,6 +97,7 @@ public:
             &caller<Types, Variant, Visitor>...
         };
 
+        assert(which >= 0 && which < COUNT);
         callers[which](*this, visitor);
     }
 private:
@@ -105,7 +112,7 @@ private:
     template <typename T>
     void construct(Which which, T&& t) {
         typedef typename std::remove_reference<T>::type type;
-        this-> which = which;
+        this->which = which;
         new(&storage) type(std::forward<T>(t));
     }
 

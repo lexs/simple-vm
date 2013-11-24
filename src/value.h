@@ -1,9 +1,12 @@
 #ifndef VALUE_H
 #define VALUE_H
 
+#include <cstddef>
 #include <cstdint>
 #include <cassert>
 #include <ostream>
+
+#include "variant.h"
 
 class Function;
 
@@ -14,40 +17,40 @@ using number_t = double;
 class Value {
 public:
     static Value none() { return Value(); }
-    static Value boolean(bool value) { return Value(Type::BOOL, value); }
-    static Value number(number_t value) { return Value(Type::NUMBER, value); }
-    static Value function(Function* function) { return Value(Type::FUNCTION, function); }
+    static Value boolean(bool value) { return Value(value); }
+    static Value number(number_t value) { return Value(value); }
+    static Value function(Function* function) { return Value(function); }
 
-    Value() : type(Type::NONE) {}
+    Value() {}
 
     Value operator+(const Value& rhs) const {
-        assert(type == Type::NUMBER && rhs.type == Type::NUMBER);
-        return Value::number(v.number + rhs.v.number);
+        assert(type() == Type::NUMBER && rhs.type() == Type::NUMBER);
+        return Value::number(value.get<number_t>() + rhs.value.get<number_t>());
     }
     Value operator-(const Value& rhs) const {
-        assert(type == Type::NUMBER && rhs.type == Type::NUMBER);
-        return Value::number(v.number - rhs.v.number);
+        assert(type() == Type::NUMBER && rhs.type() == Type::NUMBER);
+        return Value::number(value.get<number_t>() - rhs.value.get<number_t>());
     }
     Value operator*(const Value& rhs) const { return Value(); }
     Value operator/(const Value& rhs) const { return Value(); }
 
     bool operator==(const Value& rhs) const {
         // TODO: Support bool
-        assert(type == Type::NUMBER && rhs.type == Type::NUMBER);
-        return v.number == rhs.v.number;
+        assert(type() == Type::NUMBER && rhs.type() == Type::NUMBER);
+        return value.get<number_t>() == rhs.value.get<number_t>();
     }
     bool operator<(const Value& rhs) const {
-        assert(type == Type::NUMBER && rhs.type == Type::NUMBER);
-        return v.number < rhs.v.number;
+        assert(type() == Type::NUMBER && rhs.type() == Type::NUMBER);
+        return value.get<number_t>() < rhs.value.get<number_t>();
     }
     bool operator<=(const Value& rhs) const {
-        assert(type == Type::NUMBER && rhs.type == Type::NUMBER);
-        return v.number < rhs.v.number;
+        assert(type() == Type::NUMBER && rhs.type() == Type::NUMBER);
+        return value.get<number_t>() < rhs.value.get<number_t>();
     }
 
     operator Function*() {
-        assert(type == Type::FUNCTION);
-        return static_cast<Function*>(v.data);
+        assert(type() == Type::FUNCTION);
+        return static_cast<Function*>(value.get<void*>());
     }
 private:
     friend std::ostream& operator<<(std::ostream& os, const Value& value);
@@ -56,22 +59,16 @@ private:
         NONE,
         BOOL,
         NUMBER,
-        FUNCTION
-    } type;
+        FUNCTION,
+    };
 
-    union Container {
-        Container() {}
-        Container(bool b) : boolean(b) {}
-        Container(number_t n) : number(n) {}
-        Container(void* d) : data(d) {}
 
-        bool boolean;
-        number_t number;
-        void* data;
-    } v;
+    Variant<std::nullptr_t, bool, number_t, void*> value;
 
     template <typename T>
-    Value(Type t, T value) : type(t), v(value) {}
+    Value(T value) : value(value) {}
+
+    Type type() const { return static_cast<Type>(value.which_type()); }
 };
 
 #endif

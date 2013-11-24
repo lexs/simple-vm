@@ -13,11 +13,13 @@ vm: $(OBJS)
 
 variant.h: mpl.h
 
+value.h: variant.h
+
 value.o: value.cpp value.h
 
 vm.o: vm.cpp vm.h op_codes.h
 
-main.o: main.cpp op_codes.h vm.h builder.h variant.h
+main.o: main.cpp op_codes.h vm.h builder.h
 
 clean:
 	$(RM) $(OBJS)
