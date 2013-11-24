@@ -1,4 +1,4 @@
-CXX = g++-4.8
+CXX = clang++
 RM=rm -f
 
 CPPFLAGS = -g -Wall -std=c++11
@@ -11,7 +11,13 @@ all: vm
 vm: $(OBJS)
 	$(CXX) $(CPPFLAGS) -o vm $(OBJS)
 
-vm.o: instr.h value.h vm.h builder.h $(SRCS)
+variant.h: mpl.h
+
+value.o: value.cpp value.h
+
+vm.o: vm.cpp vm.h op_codes.h
+
+main.o: main.cpp op_codes.h vm.h builder.h variant.h
 
 clean:
 	$(RM) $(OBJS)
