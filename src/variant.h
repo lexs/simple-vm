@@ -84,7 +84,7 @@ public:
     template <typename Visitor> auto visit(Visitor&& visitor) const -> decltype(visitor(get<First>())) {
         using R = decltype(visit(visitor));
         static_assert(mpl::all_of(std::is_same<typename std::result_of<Visitor(Types&)>::type, R>()...),
-            "all visits must return the same type");
+            "all visitor methods must have the same return type");
         typedef R (*Callback)(const Variant& variant, Visitor& visitor);
 
         static Callback callers[] {
