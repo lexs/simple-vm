@@ -1,3 +1,5 @@
+#include <iostream>
+
 #include "variant.h"
 
 int main() {
@@ -28,4 +30,17 @@ int main() {
     };
 
     v.visit(Visitor());
+
+    struct VisitorLen {
+        int operator()(const std::string& s) {
+            return s.size();
+        }
+
+        int operator()(int i) {
+            return i;
+        }
+    };
+
+    v = "helo";
+    std::cout << "len=" << v.visit(VisitorLen()) << std::endl;
 }

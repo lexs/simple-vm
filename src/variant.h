@@ -14,18 +14,14 @@ template <typename... Types>
 class Variant {
 private:
     using Which = int;
+    using First = typename mpl::first<Types...>::value;
 
     template <Which which, typename... TT>
     struct Initializer;
 
-    template <typename T, typename Variant, typename Visitor>
-    static void caller(const Variant& variant, Visitor& visitor) {
-        visitor(variant.template get<T>());
-    }
-
-    template <typename T, typename Variant, typename Visitor>
-    static void caller(Variant& variant, Visitor& visitor) {
-        visitor(variant.template get<T>());
+    template <typename R, typename T, typename Variant, typename Visitor>
+    static R caller(const Variant& variant, Visitor& visitor) {
+        return visitor(variant.template get<T>());
     }
 public:
     static_assert(!mpl::any_of(std::is_void<Types>()...), "void type is not allowed");
@@ -34,13 +30,18 @@ public:
     static_assert(!mpl::has_duplicates<Types...>(), "duplicate types are not allowed");
 
     Variant() {
-        using First = typename mpl::first<Types...>::value;
         construct(0, First());
     }
 
     template <typename T,
         typename = typename std::enable_if<!std::is_same<Variant, typename std::remove_reference<T>::type>::value>::type>
     Variant(T& value) {
+        Initializer<0, Types...>::initialize(*this, std::forward<T>(value));
+    }
+
+    template <typename T,
+        typename = typename std::enable_if<!std::is_same<Variant, typename std::remove_reference<T>::type>::value>::type>
+    Variant(T&& value) {
         Initializer<0, Types...>::initialize(*this, std::forward<T>(value));
     }
 
@@ -79,26 +80,17 @@ public:
         return reinterpret_cast<T&>(storage);
     }
 
-    template <typename Visitor> void visit(Visitor&& visitor) const {
-        typedef void (*Callback)(const Variant& variant, Visitor& visitor);
+    template <typename Visitor, typename R = typename std::result_of<Visitor(First&)>::type> R visit(Visitor&& visitor) const {
+        static_assert(mpl::all_of(std::is_same<typename std::result_of<Visitor(Types&)>::type, R>()...),
+            "all visits must return the same type");
+        typedef R (*Callback)(const Variant& variant, Visitor& visitor);
 
         static Callback callers[] {
-            &caller<Types, Variant, Visitor>...
+            &caller<R, Types, Variant, Visitor>...
         };
 
         assert(which >= 0 && which < COUNT);
-        callers[which](*this, visitor);
-    }
-
-    template <typename Visitor> void visit(Visitor&& visitor) {
-        typedef void (*Callback)(Variant& variant, Visitor& visitor);
-
-        static Callback callers[] {
-            &caller<Types, Variant, Visitor>...
-        };
-
-        assert(which >= 0 && which < COUNT);
-        callers[which](*this, visitor);
+        return callers[which](*this, visitor);
     }
 private:
     static constexpr std::size_t SIZE = mpl::max(sizeof(Types)...);
