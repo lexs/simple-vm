@@ -1,6 +1,5 @@
-*.o
-vm
-variant_test
+build/
+bin/
 
 CMakeCache.txt
 CMakeFiles/
