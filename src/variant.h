@@ -124,7 +124,7 @@ private:
             v.construct(which, std::forward<T>(value));
         }
 
-        static void initialize(Variant& v, const T&& value) {
+        static void initialize(Variant& v, const T& value) {
             v.construct(which, value);
         }
     };
