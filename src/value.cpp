@@ -1,3 +1,5 @@
+#include "array.h"
+
 #include "value.h"
 
 std::ostream& operator<<(std::ostream& os, const Value& value) {
@@ -12,6 +14,8 @@ std::ostream& operator<<(std::ostream& os, const Value& value) {
             return os << value.get<number_t>();
         case Type::FUNCTION:
             return os << "<function at " << value.get<void*>() << ">";
+        case Type::ARRAY:
+            return os << static_cast<const Array&>(value);
         default:
             assert(false);
             return os;

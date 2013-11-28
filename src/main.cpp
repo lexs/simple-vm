@@ -1,8 +1,68 @@
+#include <memory>
+
 #include "op_codes.h"
 #include "vm.h"
 #include "builder.h"
+#include "array.h"
 
 int main() {
+    FunctionBuilder builder;
+
+    Register r_array = builder.create_register();
+    Register r_len= builder.create_register();
+    Register r_range = builder.create_register();
+    Register r_i = builder.create_register();
+    Register r_index = builder.create_register();
+    Register r_temp = builder.create_register();
+    Register r_temp2 = builder.create_register();
+
+    Constant k_0 = builder.create_constant(Value::number(0));
+    Constant k_1 = builder.create_constant(Value::number(1));
+    Constant k_2 = builder.create_constant(Value::number(2));
+    Constant k_fib = builder.self();
+
+    instr_t i_reverse[] = {
+        //new_array(r_temp),
+        len(r_len, r_array),
+        sub(r_len, r_len, k_1),
+        div(r_range, r_len, k_2),
+        loadk(r_i, k_0),
+        le(r_range, r_i),
+        jump(6),
+
+        get(r_temp, r_array, r_i), // temp = array[i]
+        sub(r_index, r_len, r_i),
+        get(r_temp2, r_array, r_index),
+        set(r_array, r_i, r_temp2),
+        set(r_array, r_index, r_temp),
+        add(r_i, r_i, k_1),
+
+
+        ret(r_array, 1)
+    };
+
+    Function* reverse = builder.build(i_reverse);
+
+    Value c_print[] = {
+        Value::function(reverse)
+    };
+
+    instr_t i_print[] = {
+        loadk(r(1), k(0)),
+        call(r(1), r(0), 1),
+        print(r(0)),
+        ret()
+    };
+
+    Function print(2, c_print, i_print);
+
+    Vm vm(&print);
+    vm.execute({Value::array(std::shared_ptr<Array>(new Array {Value::number(5), Value::number(3), Value::number(7)}))});
+
+    return 0;
+}
+
+int main2() {
     /*
     int r_fib = r(0); // Arg 1
     int r_n1 = r(1);
@@ -81,6 +141,7 @@ int main() {
     Function print(2, c_print, i_print);
 
     Vm vm(&print);
+    vm.execute({Value::array(std::shared_ptr<Array>(new Array {Value::number(1), Value::number(1)}))});
     vm.execute({Value::number(20)});
 
     return 0;

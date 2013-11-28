@@ -2,6 +2,7 @@
 #include <iostream>
 #include <functional>
 
+#include "array.h"
 #include "op_codes.h"
 #include "vm.h"
 
@@ -91,6 +92,32 @@ void Vm::handle<OpCode::LE>(instr_t i) {
 }
 
 template <>
+void Vm::handle<OpCode::NEW_ARRAY>(instr_t i) {
+    R_A(i) = Value::array(std::make_shared<Array>());
+}
+
+template <>
+void Vm::handle<OpCode::SET>(instr_t i) {
+    Array& a = R_A(i);
+
+    std::size_t index = static_cast<std::size_t>(RK_B(i));
+    a[index] = RK_C(i);
+}
+
+template <>
+void Vm::handle<OpCode::GET>(instr_t i) {
+    Array& a = R_B(i);
+    std::size_t index = static_cast<std::size_t>(RK_C(i));
+    R_A(i) = a[index];
+}
+
+template <>
+void Vm::handle<OpCode::LEN>(instr_t i) {
+    Array& a = RK_B(i);
+    R_A(i) = Value::number(a.size());
+}
+
+template <>
 void Vm::handle<OpCode::CALL>(instr_t i) {
     Function* function = R_A(i);
     std::size_t args_start = get_b(i);
@@ -168,6 +195,10 @@ void Vm::execute(std::initializer_list<Value> args) {
         &Vm::handle<OpCode::EQ>,
         &Vm::handle<OpCode::LT>,
         &Vm::handle<OpCode::LE>,
+        &Vm::handle<OpCode::NEW_ARRAY>,
+        &Vm::handle<OpCode::SET>,
+        &Vm::handle<OpCode::GET>,
+        &Vm::handle<OpCode::LEN>,
         &Vm::handle<OpCode::CALL>,
         &Vm::handle<OpCode::RET>,
         &Vm::handle<OpCode::PRINT>

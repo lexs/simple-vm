@@ -31,6 +31,11 @@ enum class OpCode : op_t {
     LT,
     LE,
 
+    NEW_ARRAY,
+    SET,
+    GET,
+    LEN,
+
     CALL,
     RET,
 
@@ -53,6 +58,12 @@ constexpr instr_t div(std::uint8_t res, std::uint16_t a, std::uint16_t b) { retu
 constexpr instr_t eq(std::uint16_t a, std::uint16_t b) { return instr_abc(OpCode::EQ, a, b); }
 constexpr instr_t lt(std::uint16_t a, std::uint16_t b) { return instr_abc(OpCode::LT, a, b); }
 constexpr instr_t le(std::uint16_t a, std::uint16_t b) { return instr_abc(OpCode::LE, a, b); }
+
+constexpr instr_t new_array(std::uint16_t a) { return instr_abc(OpCode::NEW_ARRAY, a); }
+constexpr instr_t set(std::uint16_t a, std::uint16_t b, std::uint16_t c) { return instr_abc(OpCode::SET, a, b, c); }
+constexpr instr_t get(std::uint16_t a, std::uint16_t b, std::uint16_t c) { return instr_abc(OpCode::GET, a, b, c); }
+constexpr instr_t len(std::uint16_t a, std::uint16_t b) { return instr_abc(OpCode::LEN, a, b); }
+
 
 constexpr instr_t call(std::uint8_t function, std::uint8_t start, std::uint8_t count) {
     return instr_abc(OpCode::CALL, function, start, count);

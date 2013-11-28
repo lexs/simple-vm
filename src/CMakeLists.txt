@@ -1,1 +1,1 @@
-add_executable(vm main.cpp vm.cpp value.cpp builder.cpp)
+add_executable(vm main.cpp vm.cpp array.cpp value.cpp builder.cpp)
