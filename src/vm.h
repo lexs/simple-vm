@@ -7,7 +7,7 @@
 #include <initializer_list>
 
 #include "instr.h"
-#include "value.h"
+#include "type.h"
 #include "function.h"
 #include "op_codes.h"
 
@@ -15,21 +15,21 @@ class Vm {
 public:
     explicit Vm(Function* function);
 
-    void execute(std::initializer_list<Value> args);
+    void execute(std::initializer_list<Object> args);
 private:
     struct ActivationRecord {
-        ActivationRecord(instr_t* pc, Function* function, Value* registers)
+        ActivationRecord(instr_t* pc, Function* function, Object* registers)
             : pc(pc), function(function), registers(registers) {};
 
         instr_t* pc;
         Function* function;
-        std::unique_ptr<Value[]> registers;
+        std::unique_ptr<Object[]> registers;
     };
 
     std::stack<ActivationRecord> records;
 
-    Value* constants;
-    Value* registers;
+    Object* constants;
+    Object* registers;
     instr_t* pc;
 
     template <OpCode Op>

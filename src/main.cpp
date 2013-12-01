@@ -4,6 +4,11 @@
 #include "vm.h"
 #include "builder.h"
 #include "array.h"
+#include "native_types.h"
+
+Object number(number_t value) { return NumberType::create(value); }
+Object function(Function* function) { return FunctionType::create(function); }
+Object array(const std::shared_ptr<Array>& array) { return ArrayType::create(array); }
 
 int main() {
     FunctionBuilder builder;
@@ -16,9 +21,9 @@ int main() {
     Register r_temp = builder.create_register();
     Register r_temp2 = builder.create_register();
 
-    Constant k_0 = builder.create_constant(Value::number(0));
-    Constant k_1 = builder.create_constant(Value::number(1));
-    Constant k_2 = builder.create_constant(Value::number(2));
+    Constant k_0 = builder.create_constant(number(0));
+    Constant k_1 = builder.create_constant(number(1));
+    Constant k_2 = builder.create_constant(number(2));
     Constant k_fib = builder.self();
 
     instr_t i_reverse[] = {
@@ -43,8 +48,8 @@ int main() {
 
     Function* reverse = builder.build(i_reverse);
 
-    Value c_print[] = {
-        Value::function(reverse)
+    Object c_print[] = {
+        function(reverse)
     };
 
     instr_t i_print[] = {
@@ -57,7 +62,7 @@ int main() {
     Function print(2, c_print, i_print);
 
     Vm vm(&print);
-    vm.execute({Value::array(std::shared_ptr<Array>(new Array {Value::number(5), Value::number(3), Value::number(7)}))});
+    vm.execute({array(std::shared_ptr<Array>(new Array {number(5), number(3), number(7)}))});
 
     return 0;
 }
@@ -71,8 +76,8 @@ int main2() {
     int r_counter = r(4);
 
     Value constants[] = {
-        Value::number(0), // k(0)
-        Value::number(1), // k(1)
+        number(0), // k(0)
+        number(1), // k(1)
     };
 
     instr_t fib_instructions[] = {
@@ -97,7 +102,6 @@ int main2() {
     Function fib(5, constants, fib_instructions);
 
     */
-
     FunctionBuilder builder;
 
     Register r_n = builder.create_register();
@@ -106,8 +110,8 @@ int main2() {
     Register r_n2 = builder.create_register();
 
     Constant k_fib = builder.self();
-    Constant k_1 = builder.create_constant(Value::number(1));
-    Constant k_2 = builder.create_constant(Value::number(2));
+    Constant k_1 = builder.create_constant(number(1));
+    Constant k_2 = builder.create_constant(number(2));
 
     instr_t i_fib[] = {
         loadk(r_fib, k_fib),
@@ -127,8 +131,8 @@ int main2() {
 
     Function* fib_recur = builder.build(i_fib);
 
-    Value c_print[] = {
-        Value::function(fib_recur)
+    Object c_print[] = {
+        function(fib_recur)
     };
 
     instr_t i_print[] = {
@@ -141,8 +145,7 @@ int main2() {
     Function print(2, c_print, i_print);
 
     Vm vm(&print);
-    vm.execute({Value::array(std::shared_ptr<Array>(new Array {Value::number(1), Value::number(1)}))});
-    vm.execute({Value::number(20)});
+    vm.execute({number(20)});
 
     return 0;
 }

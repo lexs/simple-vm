@@ -4,6 +4,7 @@
 
 #include "array.h"
 #include "op_codes.h"
+#include "native_types.h"
 #include "vm.h"
 
 // http://www.parashift.com/c++-faq/macro-for-ptr-to-memfn.html
@@ -93,40 +94,40 @@ void Vm::handle<OpCode::LE>(instr_t i) {
 
 template <>
 void Vm::handle<OpCode::NEW_ARRAY>(instr_t i) {
-    R_A(i) = Value::array(std::make_shared<Array>());
+    R_A(i) = ArrayType::create(std::make_shared<Array>());
 }
 
 template <>
 void Vm::handle<OpCode::SET>(instr_t i) {
-    Array& a = R_A(i);
-
-    std::size_t index = static_cast<std::size_t>(RK_B(i));
-    a[index] = RK_C(i);
+    Object& o = R_A(i);
+    std::size_t index = Numeric::convert(RK_B(i));
+    Sequence::set(o, index, RK_C(i));
 }
 
 template <>
 void Vm::handle<OpCode::GET>(instr_t i) {
-    Array& a = R_B(i);
-    std::size_t index = static_cast<std::size_t>(RK_C(i));
-    R_A(i) = a[index];
+    Object& o = R_B(i);
+    std::size_t index = Numeric::convert(RK_C(i));
+    R_A(i) = Sequence::get(o, index);
 }
 
 template <>
 void Vm::handle<OpCode::LEN>(instr_t i) {
-    Array& a = RK_B(i);
-    R_A(i) = Value::number(a.size());
+    Object& o = R_B(i);
+    assert(o.type()->as_sequence() != nullptr);
+    R_A(i) = NumberType::create(o.type()->as_sequence()->size(o.value()));
 }
 
 template <>
 void Vm::handle<OpCode::CALL>(instr_t i) {
-    Function* function = R_A(i);
+    Function* function = FunctionType::get(R_A(i));
     std::size_t args_start = get_b(i);
     std::size_t args_count = get_c(i);
 
     // TODO: Know arg count
     assert(args_count <= function->register_count());
 
-    Value* calling_reg = registers;
+    Object* calling_reg = registers;
 
     call(function);
 
@@ -138,7 +139,7 @@ template <>
 void Vm::handle<OpCode::RET>(instr_t i) {
     ActivationRecord& ar = records.top();
 
-    std::unique_ptr<Value[]> old_registers = std::move(ar.registers);
+    std::unique_ptr<Object[]> old_registers = std::move(ar.registers);
     pc = ar.pc;
 
     records.pop();
@@ -168,7 +169,7 @@ void Vm::handle<OpCode::PRINT>(instr_t i) {
 }
 
 void Vm::call(Function* function) {
-    records.emplace(pc, function, new Value[function->register_count()]);
+    records.emplace(pc, function, new Object[function->register_count()]);
     pc = function->entry_point();
     activate(records.top());
 }
@@ -178,7 +179,7 @@ void Vm::activate(const ActivationRecord& ar) {
     constants = ar.function->constants();
 }
 
-void Vm::execute(std::initializer_list<Value> args) {
+void Vm::execute(std::initializer_list<Object> args) {
     std::copy(args.begin(), args.end(), registers);
 
     typedef void (Vm::*fn)(instr_t);
